@@ -1,2 +1,1 @@
-python-jenkins
-gdata
+gdata==2.0.18

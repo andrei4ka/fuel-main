@@ -47,6 +47,8 @@ from fuelweb_test.settings import OPENSTACK_RELEASE_UBUNTU
 from fuelweb_test.settings import OSTF_TEST_NAME
 from fuelweb_test.settings import OSTF_TEST_RETRIES_COUNT
 from fuelweb_test.settings import TIMEOUT
+from fuelweb_test.settings import VCENTER_USE
+
 
 import fuelweb_test.settings as help_data
 
@@ -197,7 +199,7 @@ class FuelWebClient(object):
     def assert_release_state(self, release_name, state='available'):
         logger.info('Assert release %s has state %s', release_name, state)
         for release in self.client.get_releases():
-            if release["name"].lower().find(release_name) != -1:
+            if release["name"].find(release_name) != -1:
                 assert_equal(release['state'], state,
                              'Release state {0}'.format(release['state']))
                 return release["id"]
@@ -266,18 +268,14 @@ class FuelWebClient(object):
         return nailgun_node['fqdn']
 
     @logwrap
-    def get_pcm_nodes(self, ctrl_node, pure=False):
+    def get_pcm_nodes(self, ctrl_node):
         nodes = {}
         remote = self.get_ssh_for_node(ctrl_node)
         pcs_status = remote.execute('pcs status nodes')['stdout']
         pcm_nodes = yaml.load(''.join(pcs_status).strip())
         for status in ('Online', 'Offline', 'Standby'):
             list_nodes = (pcm_nodes['Pacemaker Nodes'][status] or '').split()
-            if not pure:
-                nodes[status] = [self.get_fqdn_by_hostname(x)
-                                 for x in list_nodes]
-            else:
-                nodes[status] = list_nodes
+            nodes[status] = [self.get_fqdn_by_hostname(x) for x in list_nodes]
         return nodes
 
     @logwrap
@@ -339,7 +337,8 @@ class FuelWebClient(object):
                 data.update(
                     {
                         'net_provider': settings["net_provider"],
-                        'net_segment_type': settings["net_segment_type"],
+                        'net_segment_type': settings[
+                            "net_segment_type"]
                     }
                 )
 
@@ -356,11 +355,12 @@ class FuelWebClient(object):
                     section = 'additional_components'
                 if option in ('volumes_ceph', 'images_ceph', 'ephemeral_ceph',
                               'objects_ceph', 'osd_pool_size', 'volumes_lvm',
-                              'volumes_vmdk', 'images_vcenter'):
+                              'volumes_vmdk'):
                     section = 'storage'
                 if option in ('tenant', 'password', 'user'):
                     section = 'access'
-                if option in ('vc_password', 'cluster', 'host_ip', 'vc_user'):
+                if option in ('vc_password', 'cluster', 'host_ip', 'vc_user',
+                              'use_vcenter'):
                     section = 'vcenter'
                 if option == 'assign_to_all_nodes':
                     section = 'public_network_assignment'
@@ -380,36 +380,14 @@ class FuelWebClient(object):
                 hpv_data = attributes['editable']['common']['libvirt_type']
                 hpv_data['value'] = "kvm"
 
-            if help_data.VCENTER_USE:
+            if VCENTER_USE:
                 logger.info('Set Hypervisor type to vCenter')
                 hpv_data = attributes['editable']['common']['libvirt_type']
                 hpv_data['value'] = "vcenter"
 
-                datacenter = attributes['editable']['storage']['vc_datacenter']
-                datacenter['value'] = help_data.VC_DATACENTER
-
-                datastore = attributes['editable']['storage']['vc_datastore']
-                datastore['value'] = help_data.VC_DATASTORE
-
-                imagedir = attributes['editable']['storage']['vc_image_dir']
-                imagedir['value'] = help_data.VC_IMAGE_DIR
-
-                host = attributes['editable']['storage']['vc_host']
-                host['value'] = help_data.VC_HOST
-
-                vc_user = attributes['editable']['storage']['vc_user']
-                vc_user['value'] = help_data.VC_USER
-
-                vc_password = attributes['editable']['storage']['vc_password']
-                vc_password['value'] = help_data.VC_PASSWORD
-
-                vc_clusters = attributes['editable']['vcenter']['cluster']
-                vc_clusters['value'] = help_data.VCENTER_CLUSTERS
-
             logger.debug("Try to update cluster "
                          "with next attributes {0}".format(attributes))
             self.client.update_cluster_attributes(cluster_id, attributes)
-
             logger.debug("Attributes of cluster were updated,"
                          " going to update networks ...")
             if MULTIPLE_NETWORKS:
@@ -479,7 +457,7 @@ class FuelWebClient(object):
     def get_pacemaker_config(self, controller_node_name):
         logger.info('Get pacemaker config at %s node', controller_node_name)
         remote = self.get_ssh_for_node(controller_node_name)
-        return ''.join(remote.check_call('crm_resource --list')['stdout'])
+        return ''.join(remote.check_call('crm configure show')['stdout'])
 
     @logwrap
     def get_last_created_cluster(self):

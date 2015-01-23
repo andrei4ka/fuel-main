@@ -309,9 +309,8 @@ def run_script(node_ssh, script_path, script_name, password='admin',
     c_res = node_ssh.execute('chmod 755 {0}'.format(path))
     logger.debug("Result of cmod is {0}".format(c_res))
     if rollback:
-        path = "UPGRADERS='host-system bootstrap docker openstack" \
-               " raise-error targetimages' {0}/{1}" \
-               " --password {2}".format(script_path, script_name, password)
+        path = "{0}/{1} --password {2}".format(script_path, script_name,
+                                               password)
         chan, stdin, stderr, stdout = node_ssh.execute_async(path)
         logger.debug('Try to read status code from chain...')
         assert_equal(chan.recv_exit_status(), exit_code,
@@ -475,6 +474,11 @@ def install_plugin_check_code(
     assert_equal(
         chan.recv_exit_status(), exit_code,
         'Install script fails with next message {0}'.format(''.join(stderr)))
+
+
+def check_kernel(kernel, expected_kernel):
+    assert_equal(kernel, expected_kernel,
+                 "kernel version is wrong, it is {0}".format(kernel))
 
 
 @logwrap
@@ -812,8 +816,3 @@ def check_stats_private_info(collector_remote, postgres_actions,
     assert_true(has_no_private_data, 'Found private data in stats, check test '
                                      'output and logs for details.')
     logger.info('Found no private data in logs')
-
-
-def check_kernel(kernel, expected_kernel):
-    assert_equal(kernel, expected_kernel,
-                 "kernel version is wrong, it is {0}".format(kernel))

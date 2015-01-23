@@ -19,7 +19,7 @@ LOCAL_MIRROR:=$(abspath $(LOCAL_MIRROR))
 DEPS_DIR?=$(TOP_DIR)/deps
 DEPS_DIR:=$(abspath $(DEPS_DIR))
 
-PRODUCT_VERSION:=6.1
+PRODUCT_VERSION:=6.0.1
 # This variable is used mostly for
 # keeping things uniform. Some files
 # contain versions as a part of their paths
@@ -74,6 +74,7 @@ VBOX_SCRIPTS_NAME?=vbox-scripts-$(PRODUCT_VERSION)
 BOOTSTRAP_ART_NAME?=bootstrap.tar.gz
 DOCKER_ART_NAME?=fuel-images.tar.lrz
 VERSION_YAML_ART_NAME?=version.yaml
+REDHAT_REPO_ART_NAME?=redhat-repo.tar
 CENTOS_REPO_ART_NAME?=centos-repo.tar
 UBUNTU_REPO_ART_NAME?=ubuntu-repo.tar
 # actual name for a diff repo will be
@@ -98,6 +99,11 @@ MASTER_DNS?=10.20.0.1
 MASTER_NETMASK?=255.255.255.0
 MASTER_GW?=10.20.0.1
 
+REDHAT_MAJOR:=6
+REDHAT_MINOR:=6
+REDHAT_RELEASE:=$(REDHAT_MAJOR).$(REDHAT_MINOR)
+REDHAT_ARCH:=x86_64
+REDHAT_IMAGE_RELEASE:=$(REDHAT_MAJOR)$(REDHAT_MINOR)
 CENTOS_MAJOR:=6
 CENTOS_MINOR:=5
 CENTOS_RELEASE:=$(CENTOS_MAJOR).$(CENTOS_MINOR)
@@ -148,11 +154,12 @@ endef
 # Repos and versions
 FUELLIB_COMMIT?=master
 NAILGUN_COMMIT?=master
-ASTUTE_COMMIT?=master
-OSTF_COMMIT?=master
+ASTUTE_COMMIT?=stable/6.0
+OSTF_COMMIT?=stable/6.0
 
-FUELLIB_REPO?=https://github.com/stackforge/fuel-library.git
-NAILGUN_REPO?=https://github.com/stackforge/fuel-web.git
+#FUELLIB_REPO?=https
+FUELLIB_REPO?=git@github.com:andrei4ka/fuel-library-redhat.git
+NAILGUN_REPO?=git@github.com:andrei4ka/fuel-web-redhat.git
 ASTUTE_REPO?=https://github.com/stackforge/fuel-astute.git
 OSTF_REPO?=https://github.com/stackforge/fuel-ostf.git
 
@@ -167,12 +174,15 @@ NAILGUN_GERRIT_COMMIT?=none
 ASTUTE_GERRIT_COMMIT?=none
 OSTF_GERRIT_COMMIT?=none
 
+LOCAL_MIRROR_REDHAT:=$(LOCAL_MIRROR)/redhat/6.6
+LOCAL_MIRROR_REDHAT_OS_BASEURL:=$(LOCAL_MIRROR_REDHAT)/os/$(REDHAT_ARCH)
 LOCAL_MIRROR_CENTOS:=$(LOCAL_MIRROR)/centos
 LOCAL_MIRROR_CENTOS_OS_BASEURL:=$(LOCAL_MIRROR_CENTOS)/os/$(CENTOS_ARCH)
 LOCAL_MIRROR_UBUNTU:=$(LOCAL_MIRROR)/ubuntu
 LOCAL_MIRROR_UBUNTU_OS_BASEURL:=$(LOCAL_MIRROR_UBUNTU)
 LOCAL_MIRROR_DOCKER:=$(LOCAL_MIRROR)/docker
 LOCAL_MIRROR_DOCKER_BASEURL:=$(LOCAL_MIRROR_DOCKER)
+DIFF_MIRROR_REDHAT_BASE:=$(LOCAL_MIRROR)/redhat_updates
 DIFF_MIRROR_CENTOS_BASE:=$(LOCAL_MIRROR)/centos_updates
 DIFF_MIRROR_UBUNTU_BASE:=$(LOCAL_MIRROR)/ubuntu_updates
 
@@ -184,6 +194,9 @@ USE_MIRROR?=ext
 ifeq ($(USE_MIRROR),ext)
 YUM_REPOS?=proprietary
 MIRROR_BASE?=http://mirror.fuel-infra.org/fwm/$(PRODUCT_VERSION)
+REDHAT_BASE?=http://localhost
+MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
+MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)
 MIRROR_CENTOS?=$(MIRROR_BASE)/centos
 MIRROR_UBUNTU?=$(MIRROR_BASE)/ubuntu
 MIRROR_DOCKER?=$(MIRROR_BASE)/docker
@@ -192,6 +205,9 @@ endif
 ifeq ($(USE_MIRROR),srt)
 YUM_REPOS?=proprietary
 MIRROR_BASE?=http://osci-mirror-srt.srt.mirantis.net/fwm/$(PRODUCT_VERSION)
+REDHAT_BASE?=http://localhost
+MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
+MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)
 MIRROR_CENTOS?=$(MIRROR_BASE)/centos
 MIRROR_UBUNTU?=$(MIRROR_BASE)/ubuntu
 MIRROR_DOCKER?=$(MIRROR_BASE)/docker
@@ -200,6 +216,9 @@ endif
 ifeq ($(USE_MIRROR),msk)
 YUM_REPOS?=proprietary
 MIRROR_BASE?=http://osci-mirror-msk.msk.mirantis.net/fwm/$(PRODUCT_VERSION)
+REDHAT_BASE?=http://localhost
+MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
+MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)
 MIRROR_CENTOS?=$(MIRROR_BASE)/centos
 MIRROR_UBUNTU?=$(MIRROR_BASE)/ubuntu
 MIRROR_DOCKER?=$(MIRROR_BASE)/docker
@@ -208,6 +227,9 @@ endif
 ifeq ($(USE_MIRROR),hrk)
 YUM_REPOS?=proprietary
 MIRROR_BASE?=http://osci-mirror-kha.kha.mirantis.net/fwm/$(PRODUCT_VERSION)
+REDHAT_BASE?=http://localhost
+MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
+MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)
 MIRROR_CENTOS?=$(MIRROR_BASE)/centos
 MIRROR_UBUNTU?=$(MIRROR_BASE)/ubuntu
 MIRROR_DOCKER?=$(MIRROR_BASE)/docker
@@ -215,17 +237,18 @@ MIRROR_CENTOS_KERNEL?=$(MIRROR_CENTOS)
 endif
 
 YUM_DOWNLOAD_SRC?=
+REDHAT_BASE?=http://localhost
+MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
+MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)
+MIRROR_REDHAT_OS_BASEURL:=$(MIRROR_REDHAT)/os/$(REDHAT_ARCH)
+MIRROR_REDHAT_KERNEL_BASEURL?=$(MIRROR_REDHAT_KERNEL)/os/$(REDHAT_ARCH)
 
 MIRROR_CENTOS?=http://mirrors-local-msk.msk.mirantis.net/centos-$(PRODUCT_VERSION)/$(CENTOS_RELEASE)
 MIRROR_CENTOS_KERNEL?=http://mirror.centos.org/centos-6/6.6/
 MIRROR_CENTOS_OS_BASEURL:=$(MIRROR_CENTOS)/os/$(CENTOS_ARCH)
 MIRROR_CENTOS_KERNEL_BASEURL?=$(MIRROR_CENTOS_KERNEL)/os/$(CENTOS_ARCH)
+
 MIRROR_UBUNTU?=http://mirrors-local-msk.msk.mirantis.net/ubuntu-$(PRODUCT_VERSION)/
-# Unfortunately security updates are handled in a manner incompatible with
-# Debian/Ubuntu. That is, instead of having ${UBUNTU_RELEASE}-updates
-# directory there's a different APT repo with security updates residing
-# in ${UBUNTU_RELEASE}/main
-MIRROR_UBUNTU_SECURITY?=http://mirrors-local-msk.msk.mirantis.net/ubuntu-security-$(PRODUCT_VERSION)/
 MIRROR_UBUNTU_OS_BASEURL:=$(MIRROR_UBUNTU)
 MIRROR_DOCKER?=http://mirror.fuel-infra.org/fwm/$(PRODUCT_VERSION)/docker
 MIRROR_DOCKER_BASEURL:=$(MIRROR_DOCKER)

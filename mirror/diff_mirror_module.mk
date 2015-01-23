@@ -1,4 +1,58 @@
 #############################
+# REDHAT DIFF MIRROR ARTIFACT
+#############################
+ifneq ($(BASE_VERSION),)
+.PHONY: redhat-diff-repo
+
+DIFF_REDHAT_REPO_ART_NAME:=$(DIFF_REDHAT_REPO_ART_BASE)-$(CURRENT_VERSION)-$(BASE_VERSION).tar
+redhat-diff-repo: $(ARTS_DIR)/$(DIFF_REDHAT_REPO_ART_NAME)
+
+$(ARTS_DIR)/$(DIFF_REDHAT_REPO_ART_NAME): $(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME)
+	$(ACTION.COPY)
+
+DIFF_REDHAT_REPO_DEP_FILE:=$(call find-files,$(DEPS_DIR_CURRENT)/$(DIFF_REDHAT_REPO_ART_NAME))
+
+ifneq ($(DIFF_REDHAT_REPO_DEP_FILE),)
+$(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME): $(DIFF_REDHAT_REPO_DEP_FILE)
+	$(ACTION.COPY)
+else
+.DELETE_ON_ERROR: $(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME)
+CURRENT_REDHAT_REPO_DEP_FILE:=$(call find-files,$(DEPS_DIR_CURRENT)/$(REDHAT_REPO_ART_NAME))
+ifneq ($(CURRENT_REDHAT_REPO_DEP_FILE),)
+$(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME): CURDIR=$(BUILD_DIR)/mirror/$(CURRENT_VERSION)/redhat-repo/Packages
+$(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME): $(BUILD_DIR)/mirror/redhat_repo_current.done
+$(BUILD_DIR)/mirror/redhat_repo_current.done: $(CURRENT_REDHAT_REPO_DEP_FILE)
+	mkdir -p $(BUILD_DIR)/mirror/$(CURRENT_VERSION)
+	tar xf $(CURRENT_REDHAT_REPO_DEP_FILE) -C $(BUILD_DIR)/mirror/$(CURRENT_VERSION)
+	$(ACTION.TOUCH)
+else
+$(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME): CURDIR=$(LOCAL_MIRROR_REDHAT_OS_BASEURL)/Packages
+$(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME): $(BUILD_DIR)/mirror/redhat_repo_current.done
+$(BUILD_DIR)/mirror/redhat_repo_current.done: \
+		$(BUILD_DIR)/mirror/build.done \
+		$(BUILD_DIR)/packages/build.done \
+		$(BUILD_DIR)/openstack/build.done
+	$(ACTION.TOUCH)
+
+endif
+$(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME): BASEDIR=$(BUILD_DIR)/mirror/$(BASE_VERSION)/redhat-repo/Packages
+$(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME): DIFFDIR=$(DIFF_MIRROR_REDHAT_BASE)-$(CURRENT_VERSION)-$(BASE_VERSION)/Packages
+$(BUILD_DIR)/mirror/$(DIFF_REDHAT_REPO_ART_NAME): | $(LOCAL_MIRROR_REDHAT_OS_BASEURL)/comps.xml
+#	unpacking old version centos mirror
+	mkdir -p $(BUILD_DIR)/mirror/$(BASE_VERSION)
+	tar xf $(DEPS_DIR)/$(BASE_VERSION)/$(REDHAT_REPO_ART_NAME) -C $(BUILD_DIR)/mirror/$(BASE_VERSION)
+#	copying packages which differ from those in base version
+	mkdir -p $(DIFFDIR)
+	/bin/bash $(SOURCE_DIR)/mirror/create_diff_mirrors.sh $(CURDIR) $(BASEDIR) $(DIFFDIR)
+#	creating diff mirror
+	cp $(LOCAL_MIRROR_REDHAT_OS_BASEURL)/comps.xml $(DIFFDIR)/../comps.xml
+	createrepo -g $(DIFFDIR)/../comps.xml -o $(DIFFDIR)/../ $(DIFFDIR)/../
+	rpm -qi -p $(DIFFDIR)/*.rpm | $(SOURCE_DIR)/iso/pkg-versions.awk > $(DIFF_MIRROR_REDHAT_BASE)-$(CURRENT_VERSION)-$(BASE_VERSION)/redhat-versions.yaml
+	tar cf $@ -C $(DIFF_MIRROR_REDHAT_BASE)-$(CURRENT_VERSION)-$(BASE_VERSION) --xform s:^:credhat_updates-$(CURRENT_VERSION)-$(BASE_VERSION)/: .
+endif # ifneq ($(DIFF_REDHAT_REPO_DEP_FILE),)
+endif # ifneq ($(BASE_VERSION),)
+
+#############################
 # CENTOS DIFF MIRROR ARTIFACT
 #############################
 ifneq ($(BASE_VERSION),)

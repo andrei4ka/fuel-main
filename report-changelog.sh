@@ -1,6 +1,14 @@
 #!/bin/bash -e
+REDHAT_CHANGELOG=${LOCAL_MIRROR}/redhat-packages.changelog
 CENTOS_CHANGELOG=${LOCAL_MIRROR}/centos-packages.changelog
 UBUNTU_CHANGELOG=${LOCAL_MIRROR}/ubuntu-packages.changelog
+[ -f ${REDHAT_CHANGELOG} ] && rm ${REDHAT_CHANGELOG}
+for packagename in `find ${LOCAL_MIRROR} -name \*.rpm | sort -u`; do
+  echo ${packagename##*/} >> ${REDHAT_CHANGELOG}
+  rpm -qp --changelog ${packagename} 2>/dev/null | sed -e '/^$/,$d' >> ${REDHAT_CHANGELOG}
+  echo '' >> ${REDHAT_CHANGELOG}
+done
+
 [ -f ${CENTOS_CHANGELOG} ] && rm ${CENTOS_CHANGELOG}
 for packagename in `find ${LOCAL_MIRROR} -name \*.rpm | sort -u`; do
   echo ${packagename##*/} >> ${CENTOS_CHANGELOG}

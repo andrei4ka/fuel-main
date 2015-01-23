@@ -284,7 +284,7 @@ class EnvironmentModel(object):
     def get_host_node_ip(self):
         return self.router()
 
-    def get_keys(self, node, custom=None, build_images=None):
+    def get_keys(self, node, custom=None):
         params = {
             'ip': node.get_ip_address_by_network_name(self.admin_net),
             'mask': self.get_net_mask(self.admin_net),
@@ -292,8 +292,7 @@ class EnvironmentModel(object):
             'hostname': '.'.join((self.hostname, self.domain)),
             'nat_interface': self.nat_interface,
             'dns1': settings.DNS,
-            'showmenu': 'yes' if custom else 'no',
-            'build_images': '1' if build_images else '0'
+            'showmenu': 'yes' if custom else 'no'
 
         }
         keys = (
@@ -308,7 +307,6 @@ class EnvironmentModel(object):
             " hostname=%(hostname)s\n"
             " dhcp_interface=%(nat_interface)s\n"
             " showmenu=%(showmenu)s\n"
-            " build_images=%(build_images)s\n"
             " <Enter>\n"
         ) % params
         return keys
@@ -483,8 +481,7 @@ class EnvironmentModel(object):
                 .format(settings.KEYSTONE_CREDS['username'],
                         settings.KEYSTONE_CREDS['password']))
 
-    def setup_environment(self, custom=settings.CUSTOM_ENV,
-                          build_images=settings.BUILD_IMAGES):
+    def setup_environment(self, custom=False):
         # start admin node
         admin = self.nodes().admin
         admin.disk_devices.get(device='cdrom').volume.upload(settings.ISO_PATH)
@@ -493,8 +490,7 @@ class EnvironmentModel(object):
         wait(lambda: admin.driver.node_active(admin), 60)
         logger.info("Proceed with installation")
         # update network parameters at boot screen
-        admin.send_keys(self.get_keys(admin, custom=custom,
-                        build_images=build_images))
+        admin.send_keys(self.get_keys(admin, custom=custom))
         if custom:
             self.setup_customisation()
         # wait while installation complete
@@ -540,9 +536,9 @@ class EnvironmentModel(object):
     def sync_node_time(self, remote):
         self.execute_remote_cmd(remote, 'hwclock -s')
         self.execute_remote_cmd(remote, 'NTPD=$(find /etc/init.d/ -regex \''
-                                        '/etc/init.d/\(ntp.?\|ntp-dev\)\');'
-                                        ' $NTPD stop; killall ntpd; '
-                                        'ntpd -qg && $NTPD start')
+                                        '/etc/init.d/ntp.?\'); $NTPD stop; '
+                                        'killall ntpd; ntpd -qg && '
+                                        '$NTPD start')
         self.execute_remote_cmd(remote, 'hwclock -w')
         remote_date = remote.execute('date')['stdout']
         logger.info("Node time: %s" % remote_date)

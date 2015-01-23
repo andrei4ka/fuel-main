@@ -123,19 +123,6 @@ for idx in $(seq 0 $((${#MOUNTPOINTS[@]} - 1)) ); do
     sudo mount ${LOOP_DEV} ${TMP_CHROOT_DIR}${MOUNT_POINT} || die "Couldn't mount mountpoint"
 done
 
-
-# inhibit service startup in the chroot
-# do this *before* running deboostrap to suppress udev start
-# (by its postinst script)
-sudo mkdir -p ${TMP_CHROOT_DIR}/usr/sbin
-cat > policy-rc.d << EOF
-#!/bin/sh
-# prevent any service from being started
-exit 101
-EOF
-chmod 755 policy-rc.d
-sudo cp policy-rc.d ${TMP_CHROOT_DIR}/usr/sbin
-
 # install base system
 sudo debootstrap $DEBOOTSTRAP_PARAMS || die "Couldn't finish debootstrap successfully"
 
@@ -149,60 +136,12 @@ sudo mkdir -p ${TMP_CHROOT_DIR}/tmp/mirror
 sudo mount --bind ${LOCAL_MIRROR} ${TMP_CHROOT_DIR}/tmp/mirror
 sudo /bin/sh -c "echo deb file:///tmp/mirror/ubuntu ${UBUNTU_RELEASE} main > ${TMP_CHROOT_DIR}/etc/apt/sources.list"
 sudo chroot ${TMP_CHROOT_DIR} apt-get update || die "Couldn't update packages list from sources"
-if ! mountpoint -q ${TMP_CHROOT_DIR}/proc; then
-	sudo mount -t proc proc ${TMP_CHROOT_DIR}/proc
-fi
-sudo chroot ${TMP_CHROOT_DIR} \
-	env DEBIAN_FRONTEND=noninteractive \
-	DEBCONF_NONINTERACTIVE_SEEN=true \
-	LC_ALL=C LANG=C LANGUAGE=C \
-	apt-get -y install ${INSTALL_PACKAGES} || die "Couldn't install the rest of packages successfully"
+sudo chroot ${TMP_CHROOT_DIR} apt-get -y install ${INSTALL_PACKAGES} || die "Couldn't install the rest of packages successfully"
 sudo umount ${TMP_CHROOT_DIR}/tmp/mirror
 
 #cloud-init reconfigure to use NoCloud data source
 echo "cloud-init cloud-init/datasources multiselect NoCloud, None" | sudo chroot ${TMP_CHROOT_DIR} debconf-set-selections -v
 sudo chroot ${TMP_CHROOT_DIR} dpkg-reconfigure -f noninteractive cloud-init
-
-# re-enable services
-sudo rm ${TMP_CHROOT_DIR}/usr/sbin/policy-rc.d
-
-# kill any stray process in chroot (just in a case some sloppy postinst
-# script still hanging around)
-signal_chrooted_processes() {
-	local chroot_dir="$1"
-	local signal="$2"
-	local proc_root
-	for p in `sudo fuser -v "$chroot_dir" 2>/dev/null`; do
-		proc_root="`sudo readlink -f /proc/$p/root || true`"
-		if [ "$proc_root" = "$chroot_dir" ]; then
-			sudo kill -s "$signal" $p
-		fi
-	done
-}
-
-signal_chrooted_processes $TMP_CHROOT_DIR TERM 
-sleep 1
-signal_chrooted_processes $TMP_CHROOT_DIR KILL
-
-if mountpoint -q ${TMP_CHROOT_DIR}/proc; then
-	sudo umount -l ${TMP_CHROOT_DIR}/proc || true
-fi
-
-umount_try_harder () {
-	local abs_mount_point="$1"
-	local umount_attempt=0
-	local max_umount_attempts=10
-
-	while sudo mountpoint -q "$abs_mount_point" && ! sudo umount "$abs_mount_point"; do
-		if [ $umount_attempt -ge $max_umount_attempts ]; then
-			return 1
-		fi
-		signal_chrooted_processes "$abs_mount_point" KILL
-		sleep 1
-		umount_attempt=$((umount_attempt+1))
-	done
-	return 0
-}
 
 for idx in $(seq $((${#MOUNTPOINTS[@]} - 1)) -1 0); do
     MOUNT_POINT=${MOUNTPOINTS[$idx]}
@@ -215,9 +154,7 @@ for idx in $(seq $((${#MOUNTPOINTS[@]} - 1)) -1 0); do
     LOOP_DEV=/dev/${FUEL_DEVICE_PREFIX}${idx}
     FS_TYPE=${MOUNT_DICT[$MOUNT_POINT]}
 
-    if ! umount_try_harder "${TMP_CHROOT_DIR}${MOUNT_POINT}"; then
-	    die "Failed to umount $LOOP_DEV (${TMP_CHROOT_DIR}${MOUNT_POINT})"
-    fi
+    sudo umount ${LOOP_DEV} || die "Couldn't unmount mountpoint"
 
     if [ "$FS_TYPE" == "ext2" ] || [ "$FS_TYPE" == "ext3" ] || [ "$FS_TYPE" == "ext4" ]; then
         sudo e2fsck -yf ${LOOP_DEV} || die "Couldn't check filesystem"

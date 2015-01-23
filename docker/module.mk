@@ -20,6 +20,7 @@ else
 # Lrzip all containers into single archive
 $(BUILD_DIR)/docker/build.done: \
 		$(BUILD_DIR)/docker/busybox.done \
+		$(BUILD_DIR)/docker/nsenter.done \
 		$(BUILD_DIR)/docker/sources.done
 	(cd $(BUILD_DIR)/docker/containers && tar cf $(BUILD_DIR)/docker/fuel-images.tar *.tar)
 	lrzip -L2 -U -D -f $(BUILD_DIR)/docker/fuel-images.tar -o $(BUILD_DIR)/docker/$(DOCKER_ART_NAME)
@@ -33,11 +34,9 @@ define build_container
 ifndef DOCKER_DEP_FILE
 $(BUILD_DIR)/docker/build.done: $(BUILD_DIR)/docker/$1.done
 endif
-$(eval RANDOM_PORT:=$(shell echo $$(($(RANDOM_PORT)+1))))
 $(BUILD_DIR)/docker/$1.done: \
 		$(BUILD_DIR)/mirror/build.done \
 		$(BUILD_DIR)/repos/repos.done \
-		$(BUILD_DIR)/packages/build.done \
 		$(BUILD_DIR)/iso/isoroot-files.done \
 		$(BUILD_DIR)/docker/base-images.done
 	(cd $(LOCAL_MIRROR_CENTOS) && python $(SOURCE_DIR)/utils/simple_http_daemon.py $(RANDOM_PORT) /tmp/simple_http_daemon_$(RANDOM_PORT).pid)
@@ -68,14 +67,26 @@ $(BUILD_DIR)/docker/busybox.done: \
 	sudo docker save busybox > $(BUILD_DIR)/docker/containers/busybox.tar
 	$(ACTION.TOUCH)
 
-$(BUILD_DIR)/docker/sources.done: \
-		$(find-files $(SOURCE_DIR)/docker)
-	mkdir -p $(BUILD_DIR)/docker/sources $(BUILD_DIR)/docker/utils
-	find $(SOURCE_DIR)/docker -mindepth 1 -type d | xargs -I{} cp -r "{}" $(BUILD_DIR)/docker/sources/
-	cp $(LOCAL_MIRROR_DOCKER_BASEURL)/fuel-centos.tar.xz $(BUILD_DIR)/docker/
-	cp $(LOCAL_MIRROR_DOCKER_BASEURL)/busybox.tar.xz $(BUILD_DIR)/docker/
-	cp -r $(SOURCE_DIR)/utils/simple_http_daemon.py $(BUILD_DIR)/docker/utils
+$(BUILD_DIR)/docker/nsenter.done: \
+		$(BUILD_DIR)/docker/base-images.done
+	mkdir -p "$(BUILD_DIR)/docker/containers"
+	sudo docker save jpetazzo/nsenter > $(BUILD_DIR)/docker/containers/nsenter.tar
 	$(ACTION.TOUCH)
 
-containers:=astute cobbler mcollective nailgun keystone nginx ostf rsync rsyslog rabbitmq postgres
-$(foreach cnt,$(containers),$(eval $(call build_container,$(cnt))))
+$(BUILD_DIR)/docker/sources.done: \
+		$(find-files $(SOURCE_DIR)/docker)
+	mkdir -p $(BUILD_DIR)/docker/sources
+	cp -r $(SOURCE_DIR)/docker/storage-* $(BUILD_DIR)/docker/sources/
+	$(ACTION.TOUCH)
+
+$(eval $(call build_container,astute))
+$(eval $(call build_container,cobbler))
+$(eval $(call build_container,mcollective))
+$(eval $(call build_container,nailgun))
+$(eval $(call build_container,keystone))
+$(eval $(call build_container,nginx))
+$(eval $(call build_container,ostf))
+$(eval $(call build_container,rsync))
+$(eval $(call build_container,rabbitmq))
+$(eval $(call build_container,postgres))
+$(eval $(call build_container,rsyslog))

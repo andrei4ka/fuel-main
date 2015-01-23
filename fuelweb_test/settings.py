@@ -23,11 +23,11 @@ ENV_NAME = os.environ.get("ENV_NAME", "fuel_system_test")
 ISO_PATH = os.environ.get('ISO_PATH')
 DNS = os.environ.get('DNS', '8.8.8.8')
 
-OPENSTACK_RELEASE_CENTOS = 'centos'
-OPENSTACK_RELEASE_UBUNTU = 'ubuntu'
-OPENSTACK_RELEASE_REDHAT = 'rhos 3.0 for rhel 6.4'
+OPENSTACK_RELEASE_CENTOS = 'CentOS'
+OPENSTACK_RELEASE_UBUNTU = 'Ubuntu'
+OPENSTACK_RELEASE_REDHAT = 'RHOS 3.0 for RHEL 6.4'
 OPENSTACK_RELEASE = os.environ.get(
-    'OPENSTACK_RELEASE', OPENSTACK_RELEASE_CENTOS).lower()
+    'OPENSTACK_RELEASE', OPENSTACK_RELEASE_CENTOS)
 
 REDHAT_LICENSE_TYPE = os.environ.get('REDHAT_LICENSE_TYPE')
 REDHAT_USERNAME = os.environ.get('REDHAT_USERNAME')
@@ -40,10 +40,10 @@ DEPLOYMENT_MODE_HA = "ha_compact"
 DEPLOYMENT_MODE = os.environ.get("DEPLOYMENT_MODE", DEPLOYMENT_MODE_HA)
 
 ADMIN_NODE_SETUP_TIMEOUT = os.environ.get("ADMIN_NODE_SETUP_TIMEOUT", 30)
-PUPPET_TIMEOUT = os.environ.get("PUPPET_TIMEOUT", 6000)
+PUPPET_TIMEOUT = os.environ.get("PUPPET_TIMEOUT", 3000)
 
 HARDWARE = {
-    "admin_node_memory": os.environ.get("ADMIN_NODE_MEMORY", 2048),
+    "admin_node_memory": os.environ.get("ADMIN_NODE_MEMORY", 1536),
     "admin_node_cpu": os.environ.get("ADMIN_NODE_CPU", 2),
     "slave_node_cpu": os.environ.get("SLAVE_NODE_CPU", 1),
 }
@@ -222,7 +222,6 @@ LOGS_DIR = os.environ.get('LOGS_DIR', os.getcwd())
 USE_ALL_DISKS = os.environ.get('USE_ALL_DISKS', 'true') == 'true'
 
 UPLOAD_MANIFESTS = os.environ.get('UPLOAD_MANIFESTS', 'false') == 'true'
-SYNC_DEPL_TASKS = os.environ.get('SYNC_DEPL_TASKS', 'false') == 'true'
 UPLOAD_MANIFESTS_PATH = os.environ.get(
     'UPLOAD_MANIFESTS_PATH', '~/git/fuel/deployment/puppet/')
 SITEPP_FOR_UPLOAD = os.environ.get(
@@ -243,15 +242,6 @@ VCENTER_USERNAME = os.environ.get('VCENTER_USERNAME')
 VCENTER_PASSWORD = os.environ.get('VCENTER_PASSWORD')
 VCENTER_CLUSTERS = os.environ.get('VCENTER_CLUSTERS')
 
-# Cinder with VMDK backend settings
-VC_HOST = os.environ.get('VCENTER_IP')
-VC_USER = os.environ.get('VCENTER_USERNAME')
-VC_PASSWORD = os.environ.get('VCENTER_PASSWORD')
-VC_DATACENTER = os.environ.get('VC_DATACENTER')
-VC_DATASTORE = os.environ.get('VC_DATASTORE')
-VC_IMAGE_DIR = os.environ.get('VC_IMAGE_DIR')
-IMAGES_VCENTER = os.environ.get('IMAGES_VCENTER')
-
 # Services tests
 SERVTEST_LOCAL_PATH = os.environ.get('SERVTEST_LOCAL_PATH', '/tmp')
 SERVTEST_USERNAME = os.environ.get('SERVTEST_USERNAME', 'admin')
@@ -269,6 +259,14 @@ SERVTEST_MURANO_IMAGE_MD5 = '9f562f3f577dc32698c11a99d3f15070'
 SERVTEST_MURANO_IMAGE_NAME = 'murano'
 SERVTEST_MURANO_IMAGE_META = {
     'murano_image_info': '{"type": "linux", "title": "murano"}'}
+
+SERVTEST_HEAT_SERVER_URL = ("http://murano-files.mirantis.com/"
+                            "F17-x86_64-cfntools.qcow2")
+SERVTEST_HEAT_IMAGE = "F17-x86_64-cfntools.qcow2"
+SERVTEST_HEAT_IMAGE_NAME = 'F17-x86_64-cfntools'
+SERVTEST_HEAT_IMAGE_MD5 = 'afab0f79bac770d61d24b4d0560b5f70'
+SERVTEST_HEAT_IMAGE_META = {
+    'heat_image_info': '{"type": "fedora", "title": "heat"}'}
 
 DEFAULT_IMAGES_CENTOS = os.environ.get(
     'DEFAULT_IMAGES_CENTOS',
@@ -291,7 +289,7 @@ OSTF_TEST_RETRIES_COUNT = int(os.environ.get('OSTF_TEST_RETRIES_COUNT', 50))
 DEPLOYMENT_NAME = os.environ.get('DEPLOYMENT_NAME')
 
 # Need for iso with docker
-TIMEOUT = int(os.environ.get('TIMEOUT', 60))
+TIMEOUT = int(os.environ.get('TIMEOUT', 10))
 ATTEMPTS = int(os.environ.get('ATTEMPTS', 5))
 
 #Create snapshots as last step in test-case
@@ -354,6 +352,3 @@ FUEL_STATS_SSL = os.environ.get('FUEL_STATS_SSL', 'true') == 'true'
 FUEL_STATS_HOST = os.environ.get('FUEL_STATS_HOST',
                                  '172.18.2.169')
 FUEL_STATS_PORT = os.environ.get('FUEL_STATS_PORT', '443')
-
-CUSTOM_ENV = os.environ.get('CUSTOM_ENV', 'false') == 'true'
-BUILD_IMAGES = os.environ.get('BUILD_IMAGES', 'false') == 'true'

@@ -118,9 +118,9 @@ class TestAdminNodeCustomManifests(TestBasic):
     def setup_with_custom_manifests(self):
         """Setup master node with custom manifests
         Scenario:
-        1. Start installation of master
+        1. Start installation of master node
         2. Enter "fuelmenu"
         3. Upload custom manifests
         4. Kill "fuelmenu" pid
         """
-        self.env.setup_environment(custom=True, build_images=True)
+        self.env.setup_environment(custom=True)

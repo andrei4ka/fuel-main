@@ -62,8 +62,12 @@ def log_snapshot_on_error(func):
             raise SkipTest()
         except Exception as test_exception:
             exc_trace = sys.exc_traceback
-            name = 'error_%s' % func.__name__
-            description = "Failed in method '%s'." % func.__name__
+            if args and 'snapshot' in args[0].__dict__:
+                name = 'error_%s' % args[0].snapshot
+                description = "Failed in method '%s'." % args[0].snapshot
+            else:
+                name = 'error_%s' % func.__name__
+                description = "Failed in method '%s'." % func.__name__
             if args[0].env is not None:
                 try:
                     create_diagnostic_snapshot(args[0].env,
@@ -102,15 +106,7 @@ def upload_manifests(func):
             if settings.UPLOAD_MANIFESTS:
                 logger.info("Uploading new manifests from %s" %
                             settings.UPLOAD_MANIFESTS_PATH)
-                if args[0].__class__.__name__ == "EnvironmentModel":
-                    environment = args[0]
-                elif args[0].__class__.__name__ == "FuelWebClient":
-                    environment = args[0].environment
-                else:
-                    logger.warning("Can't upload manifests: method of "
-                                   "unexpected class is decorated.")
-                    return result
-                remote = environment.get_admin_remote()
+                remote = args[0].environment.get_admin_remote()
                 remote.execute('rm -rf /etc/puppet/modules/*')
                 remote.upload(settings.UPLOAD_MANIFESTS_PATH,
                               '/etc/puppet/modules/')
@@ -118,9 +114,6 @@ def upload_manifests(func):
                             settings.SITEPP_FOR_UPLOAD)
                 remote.execute("cp %s /etc/puppet/manifests" %
                                settings.SITEPP_FOR_UPLOAD)
-                if settings.SYNC_DEPL_TASKS:
-                    remote.execute("fuel release --sync-deployment-tasks"
-                                   " --dir /etc/puppet/")
         except Exception:
             logger.error("Could not upload manifests")
             raise

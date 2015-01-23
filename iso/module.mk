@@ -1,4 +1,4 @@
-.PHONY: all iso img version-yaml centos-repo ubuntu-repo
+.PHONY: all iso img version-yaml centos-repo redhat-repo ubuntu-repo
 .DELETE_ON_ERROR: $(ISO_PATH) $(IMG_PATH)
 
 all: iso img version-yaml
@@ -34,6 +34,7 @@ ifdef BUILD_ID
 endif
 	cat $(BUILD_DIR)/repos/version.yaml >> $@
 
+
 ########################
 # CENTOS MIRROR ARTIFACT
 ########################
@@ -41,17 +42,19 @@ centos-repo: $(ARTS_DIR)/$(CENTOS_REPO_ART_NAME)
 
 $(ARTS_DIR)/$(CENTOS_REPO_ART_NAME): $(BUILD_DIR)/iso/isoroot-centos.done
 	mkdir -p $(@D)
-	tar cf $@ -C $(ISOROOT) --xform s:^:centos-repo/: comps.xml  EFI  images  isolinux  Packages  repodata centos-versions.yaml
+	tar cf $@ -C $(ISOROOT) --xform s:^:centos-repo/: comps.xml  EFI  images  isolinux  repodata centos-versions.yaml
+	tar cf centos-packages.tar -C $(ISOROOT) --xform s:^:centos-repo/: Packages
 
 CENTOS_DEP_FILE:=$(call find-files,$(DEPS_DIR_CURRENT)/$(CENTOS_REPO_ART_NAME))
 
 ifdef CENTOS_DEP_FILE
 $(BUILD_DIR)/iso/isoroot-centos.done: \
 		$(BUILD_DIR)/iso/isoroot-dotfiles.done
-	mkdir -p $(ISOROOT)
+	mkdir -p $(ISOROOT)/centos
 	tar xf $(CENTOS_DEP_FILE) -C $(ISOROOT) --xform s:^centos-repo/::
+	tar xf $(ISOROOT)/centos-packages.tar -C $(ISOROOT)/centos --xform s:^centos-repo/::
 	createrepo -g $(ISOROOT)/comps.xml \
-		-u media://`head -1 $(ISOROOT)/.discinfo` $(ISOROOT)
+		-u media://`head -1 $(ISOROOT)/.discinfo` $(ISOROOT)/centos
 	$(ACTION.TOUCH)
 else
 $(BUILD_DIR)/iso/isoroot-centos.done: \
@@ -60,14 +63,50 @@ $(BUILD_DIR)/iso/isoroot-centos.done: \
 		$(BUILD_DIR)/packages/build.done \
 		$(BUILD_DIR)/openstack/build.done \
 		$(BUILD_DIR)/iso/isoroot-dotfiles.done
-	mkdir -p $(ISOROOT)
-	rsync -rp $(LOCAL_MIRROR_CENTOS_OS_BASEURL)/ $(ISOROOT)
-	rsync -rp $(LOCAL_MIRROR)/centos-packages.changelog $(ISOROOT)
+	mkdir -p $(ISOROOT)/centos
+	rsync -rp --exclude 'Packages' $(LOCAL_MIRROR_CENTOS_OS_BASEURL)/ $(ISOROOT)
+	rsync -rp $(LOCAL_MIRROR_CENTOS_OS_BASEURL)/Packages $(ISOROOT)/centos/Packages
+	rsync -rp $(LOCAL_MIRROR)/centos-packages.changelog $(ISOROOT)/centos
 	createrepo -g $(ISOROOT)/comps.xml \
-		-u media://`head -1 $(ISOROOT)/.discinfo` $(ISOROOT)
-	rpm -qi -p $(ISOROOT)/Packages/*.rpm | $(SOURCE_DIR)/iso/pkg-versions.awk > $(ISOROOT)/centos-versions.yaml
+		-u media://`head -1 $(ISOROOT)/centos/.discinfo` $(ISOROOT)/centos
+	rpm -qi -p $(ISOROOT)/centos/Packages/*.rpm | $(SOURCE_DIR)/iso/pkg-versions.awk > $(ISOROOT)/centos/centos-versions.yaml
 	$(ACTION.TOUCH)
 endif
+
+########################
+# REDHAT MIRROR ARTIFACT
+########################
+redhat-repo: $(ARTS_DIR)/$(REDHAT_REPO_ART_NAME)
+
+$(ARTS_DIR)/$(REDHAT_REPO_ART_NAME): $(BUILD_DIR)/iso/isoroot-redhat.done
+	mkdir -p $(@D)
+	tar cf $@ -C $(ISOROOT)/redhat --xform s:^:redhat-repo/: comps.xml  EFI  images  isolinux  Packages  repodata redhat-versions.yaml
+
+REDHAT_DEP_FILE:=$(call find-files,$(DEPS_DIR_CURRENT)/$(REDHAT_REPO_ART_NAME))
+
+ifdef REDHAT_DEP_FILE
+$(BUILD_DIR)/iso/isoroot-redhat.done: \
+		$(BUILD_DIR)/iso/isoroot-dotfiles.done
+	mkdir -p $(ISOROOT)/redhat
+	tar xf $(REDHAT_DEP_FILE) -C $(ISOROOT)/redhat --xform s:^redhat-repo/::
+	createrepo -g $(ISOROOT)/comps.xml \
+		-u media://`head -1 $(ISOROOT)/redhat/.discinfo` $(ISOROOT)/redhat
+	$(ACTION.TOUCH)
+else
+$(BUILD_DIR)/iso/isoroot-redhat.done: \
+		$(BUILD_DIR)/mirror/build.done \
+		$(BUILD_DIR)/mirror/make-changelog.done \
+		$(BUILD_DIR)/packages/build.done \
+		$(BUILD_DIR)/openstack/build.done \
+		$(BUILD_DIR)/iso/isoroot-dotfiles.done
+	mkdir -p $(ISOROOT)/redhat
+	rsync -rp $(LOCAL_MIRROR_REDHAT_OS_BASEURL)/ $(ISOROOT)/redhat
+	rsync -rp $(LOCAL_MIRROR)/redhat-packages.changelog $(ISOROOT)/redhat
+	createrepo -g $(ISOROOT)/redhat/comps.xml $(ISOROOT)/redhat
+	rpm -qi -p $(ISOROOT)/redhat/Packages/*.rpm | $(SOURCE_DIR)/iso/pkg-versions.awk > $(ISOROOT)/redhat-versions.yaml
+	$(ACTION.TOUCH)
+endif
+
 
 ########################
 # UBUNTU MIRROR ARTIFACT
@@ -95,6 +134,7 @@ $(BUILD_DIR)/iso/isoroot-ubuntu.done: \
 	mkdir -p $(ISOROOT)/ubuntu
 	rsync -rp $(LOCAL_MIRROR_UBUNTU_OS_BASEURL)/ $(ISOROOT)/ubuntu/
 	rsync -rp $(LOCAL_MIRROR)/ubuntu-packages.changelog $(ISOROOT)
+	rsync -p $(BUILD_DIR)/packages/deb/debian-boot/initrd.gz $(ISOROOT)/ubuntu/installer-amd64/current/images/netboot/ubuntu-installer/amd64/initrd.gz
 	cat $(ISOROOT)/ubuntu/dists/$(UBUNTU_RELEASE)/main/binary-amd64/Packages | $(SOURCE_DIR)/iso/pkg-versions.awk > $(ISOROOT)/ubuntu/ubuntu-versions.yaml
 	$(ACTION.TOUCH)
 endif
@@ -117,10 +157,7 @@ $(ISOROOT)/puppet-slave.tgz: $(BUILD_DIR)/puppet/$(PUPPET_ART_NAME)
 $(ISOROOT)/docker.done: $(BUILD_DIR)/docker/build.done
 	mkdir -p $(ISOROOT)/docker/images
 	cp $(BUILD_DIR)/docker/$(DOCKER_ART_NAME) $(ISOROOT)/docker/images/$(DOCKER_ART_NAME)
-	cp $(BUILD_DIR)/docker/fuel-centos.tar.xz $(ISOROOT)/docker/images/fuel-centos.tar.xz
-	cp $(BUILD_DIR)/docker/busybox.tar.xz $(ISOROOT)/docker/images/busybox.tar.xz
 	cp -a $(BUILD_DIR)/docker/sources $(ISOROOT)/docker/sources
-	cp -a $(BUILD_DIR)/docker/utils $(ISOROOT)/docker/utils
 	$(ACTION.TOUCH)
 
 ########################
@@ -146,6 +183,7 @@ $(BUILD_DIR)/iso/isoroot-files.done: \
 		$(ISOROOT)/version.yaml \
 		$(ISOROOT)/openstack_version \
 		$(ISOROOT)/centos-versions.yaml \
+		$(ISOROOT)/redhat-versions.yaml \
 		$(ISOROOT)/ubuntu-versions.yaml \
 		$(ISOROOT)/puppet-slave.tgz
 	$(ACTION.TOUCH)
@@ -172,6 +210,9 @@ $(ISOROOT)/send2syslog.py: $(BUILD_DIR)/repos/nailgun/bin/send2syslog.py ; $(ACT
 $(BUILD_DIR)/repos/nailgun/bin/send2syslog.py: $(BUILD_DIR)/repos/nailgun.done
 
 $(ISOROOT)/centos-versions.yaml: $(BUILD_DIR)/iso/isoroot-centos.done
+	$(ACTION.TOUCH)
+
+$(ISOROOT)/redhat-versions.yaml: $(BUILD_DIR)/iso/isoroot-redhat.done
 #	here we don't need to do anything because we unpack centos repo in $(ISOROOT) and it already contains centos-versions.yaml
 	$(ACTION.TOUCH)
 
@@ -215,6 +256,7 @@ $(BUILD_DIR)/iso/isoroot-image.done: $(BUILD_DIR)/image/build.done
 ########################
 
 $(BUILD_DIR)/iso/isoroot.done: \
+		$(BUILD_DIR)/iso/isoroot-redhat.done \
 		$(BUILD_DIR)/iso/isoroot-centos.done \
 		$(BUILD_DIR)/iso/isoroot-ubuntu.done \
 		$(BUILD_DIR)/iso/isoroot-files.done \

@@ -3,7 +3,6 @@
 # Note: dependencies for deb targets are also specified here to make
 # sure the source is ready before the build is started.
 define prepare_file_source
-$(BUILD_DIR)/packages/sources/$1/$2: $(BUILD_DIR)/repos/repos.done
 $(BUILD_DIR)/packages/source_$1.done: $(BUILD_DIR)/packages/sources/$1/$2
 $(BUILD_DIR)/packages/sources/$1/$2: $(call find-files,$3)
 	mkdir -p $(BUILD_DIR)/packages/sources/$1
@@ -15,7 +14,6 @@ endef
 # Note: dependencies for deb targets are also specified here to make
 # sure the source is ready before the build is started.
 define prepare_python_source
-$(BUILD_DIR)/packages/sources/$1/$2: $(BUILD_DIR)/repos/repos.done
 $(BUILD_DIR)/packages/source_$1.done: $(BUILD_DIR)/packages/sources/$1/$2
 $(BUILD_DIR)/packages/sources/$1/$2: $(call find-files,$3)
 	mkdir -p $(BUILD_DIR)/packages/sources/$1
@@ -32,7 +30,6 @@ endef
 # Note: dependencies for deb targets are also specified here to make
 # sure the source is ready before the build is started.
 define prepare_tgz_source
-$(BUILD_DIR)/packages/sources/$1/$2: $(BUILD_DIR)/repos/repos.done
 $(BUILD_DIR)/packages/source_$1.done: $(BUILD_DIR)/packages/sources/$1/$2
 $(BUILD_DIR)/packages/sources/$1/$2: $(call find-files,$3)
 	mkdir -p $(BUILD_DIR)/packages/sources/$1
@@ -44,7 +41,6 @@ endef
 # Note: dependencies for deb targets are also specified here to make
 # sure the source is ready before the build is started.
 define prepare_ruby21_source
-$(BUILD_DIR)/packages/sources/$1/$2: $(BUILD_DIR)/repos/repos.done
 $(BUILD_DIR)/packages/source_$1.done: $(BUILD_DIR)/packages/sources/$1/$2
 $(BUILD_DIR)/packages/sources/$1/$2: $(call find-files,$3)
 	mkdir -p $(BUILD_DIR)/packages/sources/$1
