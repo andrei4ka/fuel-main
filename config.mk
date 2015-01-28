@@ -160,7 +160,7 @@ OSTF_COMMIT?=stable/6.0
 #FUELLIB_REPO?=https
 FUELLIB_REPO?=git@github.com:andrei4ka/fuel-library-redhat.git
 NAILGUN_REPO?=git@github.com:andrei4ka/fuel-web-redhat.git
-ASTUTE_REPO?=https://github.com/stackforge/fuel-astute.git
+ASTUTE_REPO?=git@github.com:andrei4ka/fuel-astute-redhat.git
 OSTF_REPO?=https://github.com/stackforge/fuel-ostf.git
 
 # Gerrit URLs and commits

@@ -42,19 +42,17 @@ centos-repo: $(ARTS_DIR)/$(CENTOS_REPO_ART_NAME)
 
 $(ARTS_DIR)/$(CENTOS_REPO_ART_NAME): $(BUILD_DIR)/iso/isoroot-centos.done
 	mkdir -p $(@D)
-	tar cf $@ -C $(ISOROOT) --xform s:^:centos-repo/: comps.xml  EFI  images  isolinux  repodata centos-versions.yaml
-	tar cf centos-packages.tar -C $(ISOROOT) --xform s:^:centos-repo/: Packages
+	tar cf $@ -C $(ISOROOT) --xform s:^:centos-repo/: comps.xml  EFI  images  isolinux  repodata centos-versions.yaml Packages
 
 CENTOS_DEP_FILE:=$(call find-files,$(DEPS_DIR_CURRENT)/$(CENTOS_REPO_ART_NAME))
 
 ifdef CENTOS_DEP_FILE
 $(BUILD_DIR)/iso/isoroot-centos.done: \
 		$(BUILD_DIR)/iso/isoroot-dotfiles.done
-	mkdir -p $(ISOROOT)/centos
+	mkdir -p $(ISOROOT)/
 	tar xf $(CENTOS_DEP_FILE) -C $(ISOROOT) --xform s:^centos-repo/::
-	tar xf $(ISOROOT)/centos-packages.tar -C $(ISOROOT)/centos --xform s:^centos-repo/::
 	createrepo -g $(ISOROOT)/comps.xml \
-		-u media://`head -1 $(ISOROOT)/.discinfo` $(ISOROOT)/centos
+		-u media://`head -1 $(ISOROOT)/.discinfo` $(ISOROOT)/
 	$(ACTION.TOUCH)
 else
 $(BUILD_DIR)/iso/isoroot-centos.done: \
@@ -64,12 +62,11 @@ $(BUILD_DIR)/iso/isoroot-centos.done: \
 		$(BUILD_DIR)/openstack/build.done \
 		$(BUILD_DIR)/iso/isoroot-dotfiles.done
 	mkdir -p $(ISOROOT)/centos
-	rsync -rp --exclude 'Packages' $(LOCAL_MIRROR_CENTOS_OS_BASEURL)/ $(ISOROOT)
-	rsync -rp $(LOCAL_MIRROR_CENTOS_OS_BASEURL)/Packages $(ISOROOT)/centos/Packages
+	rsync -rp $(LOCAL_MIRROR_CENTOS_OS_BASEURL)/ $(ISOROOT)
 	rsync -rp $(LOCAL_MIRROR)/centos-packages.changelog $(ISOROOT)/centos
 	createrepo -g $(ISOROOT)/comps.xml \
-		-u media://`head -1 $(ISOROOT)/centos/.discinfo` $(ISOROOT)/centos
-	rpm -qi -p $(ISOROOT)/centos/Packages/*.rpm | $(SOURCE_DIR)/iso/pkg-versions.awk > $(ISOROOT)/centos/centos-versions.yaml
+		-u media://`head -1 $(ISOROOT)/.discinfo` $(ISOROOT)/
+	rpm -qi -p $(ISOROOT)/Packages/*.rpm | $(SOURCE_DIR)/iso/pkg-versions.awk > $(ISOROOT)/centos/centos-versions.yaml
 	$(ACTION.TOUCH)
 endif
 
@@ -256,8 +253,8 @@ $(BUILD_DIR)/iso/isoroot-image.done: $(BUILD_DIR)/image/build.done
 ########################
 
 $(BUILD_DIR)/iso/isoroot.done: \
-		$(BUILD_DIR)/iso/isoroot-redhat.done \
 		$(BUILD_DIR)/iso/isoroot-centos.done \
+		$(BUILD_DIR)/iso/isoroot-redhat.done \
 		$(BUILD_DIR)/iso/isoroot-ubuntu.done \
 		$(BUILD_DIR)/iso/isoroot-files.done \
 		$(BUILD_DIR)/iso/isoroot-bootstrap.done \

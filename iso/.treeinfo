@@ -9,12 +9,12 @@ packagedir =
 arch = x86_64
 
 [images-x86_64]
-kernel = centos/images/pxeboot/vmlinuz
-initrd = centos/images/pxeboot/initrd.img
+kernel = images/pxeboot/vmlinuz
+initrd = images/pxeboot/initrd.img
 
 [images-xen]
-kernel = centos/images/pxeboot/vmlinuz
-initrd = centos/images/pxeboot/initrd.img
+kernel = images/pxeboot/vmlinuz
+initrd = images/pxeboot/initrd.img
 
 [stage2]
-mainimage = centos/images/install.img
+mainimage = images/install.img

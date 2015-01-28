@@ -382,8 +382,8 @@ repodir="${wwwdir}/${OPENSTACK_VERSION}"
 mkdir -p ${repodir}/centos/x86_64
 cp -r ${SOURCE}/images ${repodir}/centos/x86_64
 cp -r ${SOURCE}/isolinux ${repodir}/centos/x86_64
-cp -r ${SOURCE}/centos/repodata ${repodir}/centos/x86_64
-cp -r ${SOURCE}/centos/Packages ${repodir}/centos/x86_64
+cp -r ${SOURCE}/repodata ${repodir}/centos/x86_64
+cp -r ${SOURCE}/Packages ${repodir}/centos/x86_64
 cp ${SOURCE}/.treeinfo ${repodir}/centos/x86_64
 
 # Copying RedHat files
