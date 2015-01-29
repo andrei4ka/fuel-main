@@ -41,7 +41,7 @@ $(BUILD_DIR)/mirror/redhat/yum-config.done: \
 
 $(BUILD_DIR)/mirror/redhat/yum.done: \
 		$(BUILD_DIR)/mirror/redhat/yum-config.done \
-		$(SOURCE_DIR)/requirements-rpm.txt
+		$(SOURCE_DIR)/requirements-rpm-redhat.txt
 	yum -c $(BUILD_DIR)/mirror/redhat/etc/yum.conf clean all
 	# sudo is required because we use 'sudo yum' in several places
 	sudo yum -c $(BUILD_DIR)/mirror/redhat/etc/yum.conf clean all
@@ -49,10 +49,10 @@ $(BUILD_DIR)/mirror/redhat/yum.done: \
 	yumdownloader --resolve --archlist=$(REDHAT_ARCH) \
 		-c $(BUILD_DIR)/mirror/redhat/etc/yum.conf \
 		--destdir=$(LOCAL_MIRROR_REDHAT_OS_BASEURL)/Packages \
-		$(REQUIRED_RPMS) 2>&1 | grep -v '^looking for' | tee $(BUILD_DIR)/mirror/redhat/yumdownloader.log
+		$(REQUIRED_RPMS_REDHAT) 2>&1 | grep -v '^looking for' | tee $(BUILD_DIR)/mirror/redhat/yumdownloader.log
 	[ -z "$(YUM_DOWNLOAD_SRC)" ] || \
 	 yumdownloader --archlist=src --source -c $(BUILD_DIR)/mirror/redhat/etc/yum.conf \
-	 --destdir=$(LOCAL_MIRROR_REDHAT_OS_BASEURL)/Sources $(REQUIRED_RPMS) 2>&1 | \
+	 --destdir=$(LOCAL_MIRROR_REDHAT_OS_BASEURL)/Sources $(REQUIRED_RPMS_REDHAT) 2>&1 | \
 	 grep -v '^looking for' | tee $(BUILD_DIR)/mirror/redhat/yumdownloader_src.log
 	# Yumdownloader/repotrack workaround number one:
 	# i686 packages are downloaded by mistake. Remove them
@@ -70,13 +70,13 @@ $(BUILD_DIR)/mirror/redhat/yum.done: \
 
 show-yum-urls-redhat: \
 		$(BUILD_DIR)/mirror/redhat/yum-config.done \
-		$(SOURCE_DIR)/requirements-rpm.txt
+		$(SOURCE_DIR)/requirements-rpm-redhat.txt
 	yum -c $(BUILD_DIR)/mirror/redhat/etc/yum.conf clean all
 	rm -rf /var/tmp/yum-$$USER-*/
 	yumdownloader --urls -q --resolve --archlist=$(REDHAT_ARCH) \
 		-c $(BUILD_DIR)/mirror/redhat/etc/yum.conf \
 		--destdir=$(LOCAL_MIRROR_REDHAT_OS_BASEURL)/Packages \
-		$(REQUIRED_RPMS)
+		$(REQUIRED_RPMS_REDHAT)
 
 $(LOCAL_MIRROR_REDHAT_OS_BASEURL)/comps.xml: \
 		export COMPSXML=$(shell wget -qO- $(MIRROR_REDHAT_OS_BASEURL)/repodata/repomd.xml | grep -m 1 '$(@F)' | awk -F'"' '{ print $$2 }')
