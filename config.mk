@@ -152,8 +152,8 @@ define set_vars
 endef
 
 # Repos and versions
-FUELLIB_COMMIT?=master
-NAILGUN_COMMIT?=master
+FUELLIB_COMMIT?=origin/linux_bonds
+NAILGUN_COMMIT?=origin/node_naming
 ASTUTE_COMMIT?=stable/6.0
 OSTF_COMMIT?=stable/6.0
 
