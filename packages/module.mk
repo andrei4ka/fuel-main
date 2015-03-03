@@ -17,10 +17,14 @@ define prepare_python_source
 $(BUILD_DIR)/packages/source_$1.done: $(BUILD_DIR)/packages/sources/$1/$2
 $(BUILD_DIR)/packages/sources/$1/$2: $(call find-files,$3)
 	mkdir -p $(BUILD_DIR)/packages/sources/$1
+#ifeq ($1,nailgun)
+#	cd $3 && npm install && grunt build --static-dir=compressed_static
+#	rm -rf $3/static
+#	mv $3/compressed_static $3/static
+#endif
+# Uncompressed static
 ifeq ($1,nailgun)
-	cd $3 && npm install && grunt build --static-dir=compressed_static
-	rm -rf $3/static
-	mv $3/compressed_static $3/static
+	cd $3 && npm install && grunt bower
 endif
 	cd $3 && python setup.py sdist -d $(BUILD_DIR)/packages/sources/$1
 endef
