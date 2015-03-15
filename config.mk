@@ -152,7 +152,7 @@ define set_vars
 endef
 
 # Repos and versions
-FUELLIB_COMMIT?=origin/custom_users
+FUELLIB_COMMIT?=origin/stable_branch
 NAILGUN_COMMIT?=origin/custom_users
 ASTUTE_COMMIT?=stable/6.0
 OSTF_COMMIT?=stable/6.0
@@ -193,7 +193,7 @@ DIFF_MIRROR_UBUNTU_BASE:=$(LOCAL_MIRROR)/ubuntu_updates
 USE_MIRROR?=ext
 ifeq ($(USE_MIRROR),ext)
 YUM_REPOS?=proprietary
-MIRROR_BASE?=http://mirror.fuel-infra.org/fwm/$(PRODUCT_VERSION)
+MIRROR_BASE?=http://fuel-repository.mirantis.com/fwm/files/6.0.1-2015-02-27-131921-stable
 REDHAT_BASE?=http://localhost
 MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
 MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)
@@ -204,7 +204,7 @@ MIRROR_CENTOS_KERNEL?=$(MIRROR_CENTOS)
 endif
 ifeq ($(USE_MIRROR),srt)
 YUM_REPOS?=proprietary
-MIRROR_BASE?=http://osci-mirror-srt.srt.mirantis.net/fwm/$(PRODUCT_VERSION)
+MIRROR_BASE?=http://fuel-repository.mirantis.com/fwm/files/6.0.1-2015-02-27-131921-stable
 REDHAT_BASE?=http://localhost
 MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
 MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)
@@ -215,7 +215,7 @@ MIRROR_CENTOS_KERNEL?=$(MIRROR_CENTOS)
 endif
 ifeq ($(USE_MIRROR),msk)
 YUM_REPOS?=proprietary
-MIRROR_BASE?=http://osci-mirror-msk.msk.mirantis.net/fwm/$(PRODUCT_VERSION)
+MIRROR_BASE?=http://fuel-repository.mirantis.com/fwm/files/6.0.1-2015-02-27-131921-stable
 REDHAT_BASE?=http://localhost
 MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
 MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)
@@ -226,7 +226,7 @@ MIRROR_CENTOS_KERNEL?=$(MIRROR_CENTOS)
 endif
 ifeq ($(USE_MIRROR),hrk)
 YUM_REPOS?=proprietary
-MIRROR_BASE?=http://osci-mirror-kha.kha.mirantis.net/fwm/$(PRODUCT_VERSION)
+MIRROR_BASE?=http://fuel-repository.mirantis.com/fwm/files/6.0.1-2015-02-27-131921-stable
 REDHAT_BASE?=http://localhost
 MIRROR_REDHAT?=$(REDHAT_BASE)/redhat/6.6
 MIRROR_REDHAT_KERNEL?=$(MIRROR_REDHAT)

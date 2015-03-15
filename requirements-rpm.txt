@@ -1,7 +1,7 @@
 @Base
 @Core
 Django-1.3.4-1.el6
-Django14
+#Django14
 docker-io
 GeoIP-1.4.8-1.el6
 MySQL-client-5.5.28-7
@@ -274,7 +274,7 @@ nginx-1.0.15-4.el6
 nmap
 nodejs-0.10.4-1.el6
 nodejs-less-1.3.3-3.el6
-novnc-0.4
+novnc
 nrpe-2.14-3.el6
 ntp
 numpy-1.4.1-9.el6
@@ -650,9 +650,7 @@ zabbix-agent
 zabbix-sender
 zabbix-server
 zabbix-server-mysql
-zabbix-server-pgsql
 zabbix-web
 zabbix-web-mysql
-zabbix-web-pgsql
 rubygem-rethtool
 rubygem-ohai
