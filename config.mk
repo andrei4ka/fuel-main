@@ -152,8 +152,8 @@ define set_vars
 endef
 
 # Repos and versions
-FUELLIB_COMMIT?=origin/stable_branch
-NAILGUN_COMMIT?=origin/custom_users
+FUELLIB_COMMIT?=origin/newmaster
+NAILGUN_COMMIT?=origin/zabbixha
 ASTUTE_COMMIT?=stable/6.0
 OSTF_COMMIT?=stable/6.0
 

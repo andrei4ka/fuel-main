@@ -367,6 +367,7 @@ pyparsing-doc
 pysendfile-2.0.0-3.el6
 python-fixtures-0.3.14-3.el6.noarch
 python-ldappool
+python-pika
 python-oslo-config
 python-retrying-1.2.3-3.mira1.noarch
 python-actdiag-0.4.3-1
@@ -613,6 +614,7 @@ percona-xtrabackup
 yum
 yum-utils
 yum-rhn-plugin
+yum-plugin-priorities
 zeromq
 zeromq3
 zlib-devel-1.2.3-29.el6
