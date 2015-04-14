@@ -414,6 +414,9 @@ mkdir -p ${wwwdir}/bootstrap
 cp -r ${SOURCE}/bootstrap/initramfs.img ${wwwdir}/bootstrap
 cp -r ${SOURCE}/bootstrap/linux ${wwwdir}/bootstrap
 
+# Copying additional components
+cp -r ${SOURCE}/additional_components/* /opt/
+
 # Copying target images
 cp -r ${SOURCE}/targetimages ${wwwdir}
 

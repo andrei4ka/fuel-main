@@ -1,7 +1,7 @@
 #!/bin/bash
 
 std_iso="/root/fuel-main-redhat/build/artifacts/fuel-6.0.1.iso"
-tmp="/mnt/iso2"
+tmp="/mnt/iso2/additional_components"
 ctm_iso_name="custom.iso"
 stf_loc="/mnt/stuff"
 
