@@ -1,9 +1,9 @@
 #!/bin/bash
 
 std_iso="/root/fuel-main-redhat/build/artifacts/fuel-6.0.1.iso"
-tmp="/mnt/iso2/additional_components"
+tmp="/mnt/iso2"
 ctm_iso_name="custom.iso"
-stf_loc="/mnt/stuff"
+stf_loc="/mnt/additional_components"
 
 #Customization of iso
 
@@ -43,7 +43,11 @@ git clone https://github.com/sshturm/isrm.git $stf_loc/isrm
 git clone https://github.com/grebennikov/reports.git $stf_loc/reports
 git clone https://github.com/noskovao/oss_pull.git $stf_loc/oss_pull
 
-cp -r /mnt/stuff/* $tmp
+echo "mkdir -p $tmp/additional_components/"
+mkdir -p $tmp/additional_components/
+
+echo "cp -r $stf_loc/* $tmp/additional_components/"
+cp -r $stf_loc/* $tmp/additional_components/
 
 cd /mnt; mkisofs -r -V "Mirantis Fuel" -p "Mirantis Inc." -J -T -R -b isolinux/isolinux.bin \
   -no-emul-boot -boot-load-size 4 -boot-info-table -x "lost+found" -o ./$ctm_iso_name ./iso2
